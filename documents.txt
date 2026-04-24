@@ -1,0 +1,20 @@
+ # Animals
+        "The cat curled up on the warm windowsill and fell asleep.",
+        "A golden retriever fetched the ball from the lake.",
+        "Dolphins are known to be among the most intelligent animals.",
+        # Food & cooking
+        "She simmered the tomato sauce for three hours.",
+        "The bakery on Main Street makes the best sourdough bread.",
+        "Coffee beans are roasted at temperatures above 400 degrees.",
+        # Space
+        "The James Webb telescope captured images of distant galaxies.",
+        "Astronauts on the space station experience 16 sunrises per day.",
+        "Mars has the largest volcano in the solar system, Olympus Mons.",
+        # Music
+        "The guitarist played a twelve-bar blues solo in the key of E.",
+        "Beethoven composed his Ninth Symphony while almost completely deaf.",
+        "The drummer kept a steady rhythm through the entire jazz set.",
+        # Technology
+        "Python is one of the most popular programming languages today.",
+        "The new chip has 80 billion transistors packed into a single die.",
+        "Self-driving cars use lidar sensors to map their surroundings.",
