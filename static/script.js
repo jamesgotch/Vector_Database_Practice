@@ -45,22 +45,114 @@ async function fetchDocuments() {
 // Fetch all documents initially
 fetchDocuments();
 
+// --- Search Functionality ---
+const searchContainer = document.createElement('div');
+searchContainer.id = 'search-container';
+searchContainer.innerHTML = '<input type="text" id="search-input" placeholder="Search documents by semantic meaning..." autocomplete="off">';
+listElement.parentNode.insertBefore(searchContainer, listElement);
+
+const searchInput = document.getElementById('search-input');
+let searchTimeout;
+
+searchInput.addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+    clearTimeout(searchTimeout);
+    
+    if (query) {
+        // Debounce the search to avoid spamming the endpoint while typing
+        searchTimeout = setTimeout(() => {
+            performSearch(query);
+        }, 300);
+    } else {
+        fetchDocuments();
+    }
+});
+
+async function performSearch(query) {
+    renderSkeletons();
+    try {
+        const endpoint = `/search?query=${encodeURIComponent(query)}`;
+        const response = await fetch(endpoint);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        listElement.innerHTML = '';
+
+        // The backend now returns a clean array of objects: [{id: '...', document: '...'}]
+        if (data && data.length > 0) {
+            data.forEach((item, index) => {
+                const docId = item.id;
+                const doc = item.document;
+                const distance = item.distance;
+                const div = document.createElement('div');
+                div.className = 'document-item';
+                
+                div.style.animationDelay = `${index * 0.07}s`;
+                const strong = document.createElement('strong');
+                if (distance !== undefined) {
+                    strong.textContent = `${docId} (Distance: ${distance.toFixed(4)}): `;
+                } else {
+                    strong.textContent = `${docId}: `;
+                }
+                div.appendChild(strong);
+                div.appendChild(document.createTextNode(doc));
+                listElement.appendChild(div);
+            });
+        } else {
+            listElement.innerHTML = '<div class="empty-state">No matching documents found.</div>';
+        }
+    } catch (error) {
+        console.error('Error fetching search results:', error);
+        listElement.innerHTML = '<div class="empty-state" style="color: #ef4444;">Error loading search results.</div>';
+    }
+}
 
 // --- High-End Dynamic Laser Background ---
 const canvas = document.getElementById('laser-canvas');
 const ctx = canvas.getContext('2d', { alpha: true });
 let width, height;
 
-let currentEffect = 'none';
+let currentEffect = 'none'; // The active animation effect
+let isRedTheme = false; // The active UI theme
+
 const effectSelector = document.getElementById('effect-selector');
 if (effectSelector) {
-    effectSelector.addEventListener('change', (e) => {
-        currentEffect = e.target.value;
-        if (currentEffect.startsWith('laser')) {
-            lasers.forEach(laser => laser.updateColor());
-        } else if (currentEffect.startsWith('lightspeed')) {
-            lightSpeedLasers.forEach(ls => ls.updateColor());
+    // Remove lightspeed options dynamically
+    Array.from(effectSelector.options).forEach(opt => {
+        if (opt.value.includes('lightspeed')) {
+            opt.remove();
         }
+    });
+
+    // Add Red Lasers option if missing
+    if (!Array.from(effectSelector.options).some(opt => opt.value === 'red-lasers')) {
+        const redOption = document.createElement('option');
+        redOption.value = 'red-lasers';
+        redOption.textContent = 'Red Lasers';
+        effectSelector.appendChild(redOption);
+    }
+
+    effectSelector.addEventListener('change', (e) => {
+        const value = e.target.value;
+
+        if (value === 'red-lasers') {
+            isRedTheme = true;
+            document.documentElement.classList.add('theme-red-lasers');
+            document.body.classList.add('theme-red-lasers');
+            currentEffect = 'laser-wave'; // Use laser-wave animation for this theme
+        } else {
+            isRedTheme = false;
+            document.documentElement.classList.remove('theme-red-lasers');
+            document.body.classList.remove('theme-red-lasers');
+            currentEffect = value;
+        }
+
+        // Force all lasers to update their color based on the new theme
+        lasers.forEach(laser => laser.updateColor());
+
         if (currentEffect === 'none') {
             ctx.globalCompositeOperation = 'source-over';
             ctx.clearRect(0, 0, width, height);
@@ -99,7 +191,9 @@ class Laser {
     }
 
     updateColor() {
-        const colors = ['#00f3ff', '#38bdf8', '#0284c7']; // All blue
+        const colors = isRedTheme
+            ? ['#ef4444', '#f87171', '#dc2626'] // Red theme colors
+            : ['#00f3ff', '#38bdf8', '#0284c7']; // Default blue colors
         this.color = colors[Math.floor(Math.random() * colors.length)];
     }
 
@@ -143,82 +237,8 @@ class Laser {
     }
 }
 
-// --- High-End Light Speed (Warp) Effect ---
-class LightSpeedLaser {
-    constructor() {
-        this.reset(true);
-    }
-
-    reset(randomZ = false) {
-        this.x = (Math.random() - 0.5) * 3000;
-        this.y = (Math.random() - 0.5) * 3000;
-        this.z = randomZ ? Math.random() * 2000 : 2000;
-        this.pz = this.z;
-        
-        this.speed = 1.5 + Math.random() * 2.5; // Super high speed
-        this.updateColor();
-    }
-
-    updateColor() {
-        let colors;
-        if (currentEffect === 'lightspeed-white') {
-            colors = ['#ffffff', '#f8fafc', '#e2e8f0'];
-        } else if (currentEffect === 'lightspeed-red') {
-            colors = ['#ef4444', '#f87171', '#dc2626'];
-        } else {
-            colors = ['#00f3ff', '#38bdf8', '#0284c7', '#ffffff']; // Blue lightspeed
-        }
-        this.color = colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    update(deltaTime) {
-        this.pz = this.z;
-        this.z -= this.speed * deltaTime;
-        if (this.z < 10) this.reset();
-    }
-
-    draw(ctx) {
-        const cx = width / 2;
-        const cy = height / 2;
-        const fov = 1000;
-
-        // Calculate 3D to 2D perspective projection
-        const sx = (this.x / this.z) * fov + cx;
-        const sy = (this.y / this.z) * fov + cy;
-        const px = (this.x / this.pz) * fov + cx;
-        const py = (this.y / this.pz) * fov + cy;
-
-        if (this.pz === this.z) return; // Prevent artifacts when resetting
-
-        const thickness = Math.max(0.5, 1000 / this.z); // Get thicker as they get closer
-        
-        // Seamlessly fade in at distance and fade out right before camera to ensure infinite looping
-        const distanceFade = Math.min(1, (2000 - this.z) / 250);
-        const nearFade = Math.max(0, Math.min(1, (this.z - 10) / 50));
-        const opacity = Math.min(1, 2000 / this.z * 0.4) * distanceFade * nearFade;
-
-        ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(sx, sy);
-
-        // Draw a manual glow (thick transparent line)
-        ctx.lineWidth = thickness + 4;
-        ctx.strokeStyle = this.color;
-        ctx.globalAlpha = opacity * 0.3;
-        ctx.stroke();
-
-        // Draw core laser
-        ctx.lineWidth = thickness;
-        ctx.globalAlpha = opacity;
-        ctx.stroke();
-    }
-}
-
 // Create a pool of 12 simultaneous lasers
 const lasers = Array.from({ length: 12 }, () => new Laser());
-
-// Create a massive pool of light speed beams
-const lightSpeedLasers = Array.from({ length: 3000 }, () => new LightSpeedLaser());
 
 let lastTime = 0;
 
@@ -234,16 +254,6 @@ function animate(timestamp) {
         lasers.forEach(laser => {
             laser.update(deltaTime);
             laser.draw(ctx);
-        });
-    } else if (currentEffect.startsWith('lightspeed')) {
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.fillStyle = '#000000'; // Pitch black space
-        ctx.fillRect(0, 0, width, height);
-        
-        ctx.globalCompositeOperation = 'screen';
-        lightSpeedLasers.forEach(ls => {
-            ls.update(deltaTime);
-            ls.draw(ctx);
         });
     }
 

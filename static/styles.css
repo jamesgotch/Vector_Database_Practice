@@ -95,6 +95,36 @@ h1 {
     text-shadow: 0 10px 30px rgba(56, 189, 248, 0.2);
 }
 
+#search-container {
+    margin-bottom: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+#search-input {
+    width: 100%;
+    max-width: 600px;
+    background: var(--card-bg);
+    color: var(--text-main);
+    border: 1px solid var(--card-border);
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-family: inherit;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+#search-input:focus {
+    border-color: var(--accent-start);
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
+#search-input::placeholder {
+    color: var(--text-muted);
+}
+
 #document-list {
     display: flex;
     flex-direction: column;
@@ -156,4 +186,30 @@ strong {
     color: var(--text-muted);
     padding: 40px;
     font-size: 1.1rem;
+}
+
+/* --- Red Laser Theme --- */
+html.theme-red-lasers, body.theme-red-lasers {
+    --bg-primary: #000000;
+    --bg-secondary: #000000;
+    --accent-start: #ef4444;
+    --accent-end: #dc2626;
+    --accent-glow: rgba(239, 68, 68, 0.6);
+    --card-bg: rgba(10, 0, 0, 0.6);
+    --card-border: rgba(239, 68, 68, 0.4);
+    --text-main: #fca5a5;
+    --text-muted: #f87171;
+}
+
+body.theme-red-lasers h1 {
+    text-shadow: 0 10px 30px rgba(239, 68, 68, 0.4);
+}
+
+body.theme-red-lasers .document-item {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+}
+
+body.theme-red-lasers .document-item:hover {
+    border-color: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2), 0 0 35px rgba(239, 68, 68, 0.9);
 }

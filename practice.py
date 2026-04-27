@@ -48,3 +48,7 @@ collection.add(
 
 results = collection.get()
 print(results["documents"])
+
+query = "What is happening in science."
+results = collection.query(query_texts = [query],n_results = 5)
+print(results["documents"]) 
