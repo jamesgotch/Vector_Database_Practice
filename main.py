@@ -75,6 +75,6 @@ def search_documents(query: str):
         }
         documents.append(dictionary)
     return documents
-
+    
 
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
